@@ -320,6 +320,27 @@ export class CredentialsClass {
 			customUserAgent: getAmplifyUserAgent(),
 		});
 
+		/*
+			Note: This should no longer be necessary once fromCognitoIdentityPool in
+			aws-sdk-js v3 properly returns the identityId.
+
+			Similar workarounds were also implemented in _setCredentialsForGuest and
+			_setCredentialsFromSession.
+		*/
+		const setIdentityId = async () => {
+			const { IdentityId } = await cognitoClient.send(
+				new GetIdCommand({
+					IdentityPoolId: identityPoolId,
+					Logins: logins,
+				}),
+			);
+			this._identityId = IdentityId;
+		};
+
+		setIdentityId().catch(async err => {
+			throw err;
+		});
+
 		let credentials = undefined;
 		if (identity_id) {
 			const cognitoIdentityParams: FromCognitoIdentityParameters = {
